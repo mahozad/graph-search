@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
+    implementation ("org.apache.lucene:lucene-core:8.5.1")
 }
 
 tasks {

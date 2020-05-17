@@ -1,1 +1,1 @@
-rootProject.name = "graph-ranking"
+rootProject.name = "graph-search"

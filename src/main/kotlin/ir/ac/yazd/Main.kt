@@ -32,5 +32,4 @@ fun index() {
             parser.parse(inputStream, handler)
         }
     }
-    handler.close()
 }

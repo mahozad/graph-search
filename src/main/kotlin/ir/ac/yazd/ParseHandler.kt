@@ -29,6 +29,4 @@ class ParseHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, name: String) {
         if (name.toUpperCase() == "DOC") indexer.index(docId, url, title, body)
     }
-
-    fun close() = indexer.close()
 }

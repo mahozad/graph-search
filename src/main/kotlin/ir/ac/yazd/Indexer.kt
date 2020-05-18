@@ -24,6 +24,4 @@ class Indexer {
         }
         indexWriter.addDocument(document)
     }
-
-    fun close() = indexWriter.close()
 }

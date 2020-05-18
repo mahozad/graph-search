@@ -8,10 +8,22 @@ import javax.xml.parsers.SAXParserFactory
 
 @ExperimentalStdlibApi
 fun main() {
-    val sourceFiles = arrayOf(File("data/WIR-Part1.rar"), File("data/WIR-Part2.rar"))
+    val startTime = Instant.now()
+    index()
+    val endTime = Instant.now()
+
+    val duration = Duration.between(startTime, endTime)
+    println("Time: ${duration.toMinutes()}m")
+}
+
+@ExperimentalStdlibApi
+fun index() {
+    val sourceFiles = arrayOf(
+        File("data/WIR-Part1.rar"),
+        File("data/WIR-Part2.rar")
+    )
     val parser = SAXParserFactory.newInstance().newSAXParser()
     val handler = ParseHandler()
-    val startTime = Instant.now()
 
     for (sourceFile in sourceFiles) {
         val archive = Archive(sourceFile, null)
@@ -21,6 +33,4 @@ fun main() {
         }
     }
     handler.close()
-
-    println("Time: ${Duration.between(startTime, Instant.now()).toMinutes()}m")
 }

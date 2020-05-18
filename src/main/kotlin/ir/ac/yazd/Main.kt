@@ -5,11 +5,7 @@ import java.io.File
 import javax.xml.parsers.SAXParserFactory
 
 fun main() {
-    val sourceFiles = arrayOf(
-        File("C:/Users/Mahdi/Desktop/New folder/data/WIR-Part1.rar"),
-        File("C:/Users/Mahdi/Desktop/New folder/data/WIR-Part2.rar")
-    )
-
+    val sourceFiles = arrayOf(File("data/WIR-Part1.rar"), File("data/WIR-Part2.rar"))
     val parser = SAXParserFactory.newInstance().newSAXParser()
     val handler = ParseHandler()
 
@@ -20,6 +16,5 @@ fun main() {
             parser.parse(inputStream, handler)
         }
     }
-
     handler.close()
 }

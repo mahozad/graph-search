@@ -2,6 +2,7 @@ package ir.ac.yazd
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
+import org.apache.lucene.document.Field.Store
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.MMapDirectory
@@ -18,9 +19,9 @@ class Indexer {
     fun index(docId: Int, url: String, title: String, body: String) {
         val document = Document().apply {
             add(StoredField("DOCID", docId)) // If you want to search on it, use IntPoint field instead
-            add(StringField("URL", url, Field.Store.NO))
-            add(TextField("TITLE", title, Field.Store.NO))
-            add(TextField("BODY", body, Field.Store.NO))
+            add(StoredField("URL", url))
+            add(TextField("TITLE", title, Store.NO))
+            add(TextField("BODY", body, Store.NO))
         }
         indexWriter.addDocument(document)
     }

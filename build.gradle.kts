@@ -13,8 +13,9 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.apache.lucene:lucene-core:8.5.1")
     implementation("com.github.junrar:junrar:4.0.0")
+    implementation("org.apache.lucene:lucene-core:8.5.1")
+    implementation ("org.apache.lucene:lucene-queryparser:8.5.1")
 }
 
 tasks {

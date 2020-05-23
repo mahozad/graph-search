@@ -70,10 +70,7 @@ fun search() {
     val hits = searcher.search(query, 10).scoreDocs
 
     // Iterate through the results:
-    for (i in hits.indices) {
-        val hitDoc: Document = searcher.doc(hits[i].doc)
-        println(hitDoc)
-    }
+    for (hit in hits) println(searcher.doc(hit.doc))
 
     reader.close()
     directory.close()

@@ -31,7 +31,7 @@ fun index() {
         File("data/WIR-Part1.rar"),
         File("data/WIR-Part2.rar")
     )
-    // NOTE: The IndexWriter class is fully thread-safe
+    // NOTE: Lucene IndexWriter is fully thread-safe
     val executorService = Executors.newFixedThreadPool(4)
     val indexer = Indexer()
 

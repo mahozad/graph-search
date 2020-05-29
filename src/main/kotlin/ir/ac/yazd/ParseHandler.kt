@@ -4,14 +4,13 @@ import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 
 @ExperimentalStdlibApi // For concatToString()
-class ParseHandler : DefaultHandler() {
+class ParseHandler(private val indexer: Indexer) : DefaultHandler() {
 
     private var currentElement = "Not set yet"
     private var docId = -1
     private var title = "Not set yet"
     private var body = "Not set yet"
     private var url = "Not set yet"
-    private val indexer = Indexer()
 
     override fun startElement(uri: String, localName: String, name: String, attrs: Attributes) {
         currentElement = name.toUpperCase()
@@ -29,6 +28,4 @@ class ParseHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, name: String) {
         if (name.toUpperCase() == "DOC") indexer.index(docId, url, title, body)
     }
-
-    fun close() = indexer.close()
 }

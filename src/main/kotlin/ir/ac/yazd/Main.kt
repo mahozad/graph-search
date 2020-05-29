@@ -2,7 +2,6 @@ package ir.ac.yazd
 
 import com.github.junrar.Archive
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.document.Document
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.IndexSearcher
@@ -10,18 +9,20 @@ import org.apache.lucene.store.Directory
 import org.apache.lucene.store.MMapDirectory
 import java.io.File
 import java.nio.file.Path
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit.DAYS
 import javax.xml.parsers.SAXParserFactory
 
 @ExperimentalStdlibApi
 fun main() {
-    // val startTime = Instant.now()
-    // index()
-    // val endTime = Instant.now()
-    //
-    // val duration = Duration.between(startTime, endTime)
-    // println("Time: ${duration.toMinutes()}m")
+    val startTime = Instant.now()
+    index()
+    val duration = Duration.between(startTime, Instant.now())
+    println("Time: ${duration.toMinutes()}m")
 
-    search()
+    // search()
 }
 
 @ExperimentalStdlibApi
@@ -30,18 +31,25 @@ fun index() {
         File("data/WIR-Part1.rar"),
         File("data/WIR-Part2.rar")
     )
-    val parser = SAXParserFactory.newInstance().newSAXParser()
-    val handler = ParseHandler()
+    // NOTE: The IndexWriter class is fully thread-safe
+    val executorService = Executors.newFixedThreadPool(4)
+    val indexer = Indexer()
 
     for (sourceFile in sourceFiles) {
         val archive = Archive(sourceFile, null)
         for (fileHeader in archive) {
             val inputStream = archive.getInputStream(fileHeader)
-            parser.parse(inputStream, handler)
+            executorService.submit(object : Runnable {
+                val parser = SAXParserFactory.newInstance().newSAXParser()
+                val handler = ParseHandler(indexer)
+                override fun run() = parser.parse(inputStream, handler)
+            })
         }
     }
 
-    handler.close() // Required
+    executorService.shutdown()
+    executorService.awaitTermination(1, DAYS)
+    indexer.close() // Required
 }
 
 fun search() {

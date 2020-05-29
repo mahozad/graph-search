@@ -50,7 +50,7 @@ fun search() {
     val searcher = IndexSearcher(reader)
     val analyzer = StandardAnalyzer()
 
-    val input = "پدر و مادر"
+    val input = "زنبور عسل"
 
     // Parse a simple query that searches for "text":
     val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)

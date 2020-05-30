@@ -60,7 +60,6 @@ fun search() {
 
     val input = "زنبور عسل"
 
-    // Parse a simple query that searches for "text":
     val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
     // OR
     // val titleQuery = PhraseQuery(5, "TITLE", input)
@@ -70,10 +69,7 @@ fun search() {
     //     .add(bodyQuery, BooleanClause.Occur.MUST)
     //     .build()
     // OR
-    // val parser = QueryParser("fieldname", analyzer)
-    // val query = parser.parse(input)
-    // OR
-    // val parser = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer)
+    // val parser = QueryParser("TITLE", analyzer)
     // val query = parser.parse(input)
     val hits = searcher.search(query, 10).scoreDocs
 

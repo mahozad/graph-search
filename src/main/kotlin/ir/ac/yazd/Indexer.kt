@@ -16,8 +16,13 @@ private val indexPath = Path.of("E:/index")
 class Indexer {
 
     private val directory = MMapDirectory.open(indexPath)
-    private val config = IndexWriterConfig(StandardAnalyzer()).apply { openMode = CREATE }
+    private val config = IndexWriterConfig(StandardAnalyzer())
     private val indexWriter = IndexWriter(directory, config)
+
+    init {
+        config.openMode = CREATE
+        config.ramBufferSizeMB = 128.0 // To increase performance
+    }
 
     fun index(docId: Int, url: String, title: String, body: String) {
         val document = Document().apply {

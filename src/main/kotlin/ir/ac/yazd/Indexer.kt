@@ -16,7 +16,9 @@ private val indexPath = Path.of("E:/index")
 class Indexer {
 
     private val directory = MMapDirectory.open(indexPath)
-    private val config = IndexWriterConfig(StandardAnalyzer())
+    // NOTE: StandardAnalyzer seems to work better than PersianAnalyzer or SimpleAnalyzer
+    private val analyzer = StandardAnalyzer()
+    private val config = IndexWriterConfig(analyzer)
     private val indexWriter = IndexWriter(directory, config)
 
     init {

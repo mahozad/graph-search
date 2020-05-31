@@ -5,6 +5,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.IndexSearcher
+import org.apache.lucene.search.similarities.BM25Similarity
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.MMapDirectory
 import java.io.File
@@ -17,12 +18,12 @@ import javax.xml.parsers.SAXParserFactory
 
 @ExperimentalStdlibApi
 fun main() {
-    val startTime = Instant.now()
-    index()
-    val duration = Duration.between(startTime, Instant.now())
-    println("Time: ${duration.toMinutes()}m")
+    // val startTime = Instant.now()
+    // index()
+    // val duration = Duration.between(startTime, Instant.now())
+    // println("Time: ${duration.toMinutes()}m")
 
-    // search()
+    search()
 }
 
 @ExperimentalStdlibApi
@@ -56,6 +57,7 @@ fun search() {
     val directory: Directory = MMapDirectory(Path.of("E:/index"))
     val reader = DirectoryReader.open(directory)
     val searcher = IndexSearcher(reader)
+    searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for scoring documents
     val analyzer = StandardAnalyzer()
 
     val input = "زنبور عسل"

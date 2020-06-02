@@ -90,7 +90,7 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>) {
     val directory: Directory = MMapDirectory(Path.of("E:/index-standard/"))
     val reader = DirectoryReader.open(directory)
     val searcher = IndexSearcher(reader)
-    searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for scoring documents
+    searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for ranking docs
     val analyzer = StandardAnalyzer()
 
     // TermsQuery class

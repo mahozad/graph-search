@@ -13,10 +13,16 @@ import org.xml.sax.helpers.DefaultHandler
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
 import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
+
+val nodes = mutableSetOf<Int>()
+lateinit var graph: Map<Int, List<Int>>
+lateinit var graphReverse: Map<Int, List<Int>>
+var ranks: MutableMap<Int, Double> = mutableMapOf()
 
 @ExperimentalStdlibApi
 fun main() {
@@ -25,7 +31,9 @@ fun main() {
     // val duration = Duration.between(startTime, Instant.now())
     // println("Time: ${duration.toMinutes()}m")
 
-    query()
+    // query()
+
+    createPageRank()
 }
 
 @ExperimentalStdlibApi
@@ -127,4 +135,56 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>) {
 
 fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {
     return searcher.doc(docNumber).getField("DOCID").numericValue().toInt()
+}
+
+fun createPageRank() {
+    constructGraphs()
+    graph.keys.forEach { ranks[it] = 1.0 / graph.size }
+    val epsilon = 1.0 / 1000000
+    var change = 1.0
+
+    // initially PageRank of all pages is equal to 1/n (n = number of nodes in graph)
+    // while true (while the change is greater than epsilon=approximation error e.g. 1/1000000)
+    //      for every node in graph
+    //          PageRank(node) = ∑PageRank(q)/outDegree(q)
+
+    var previousRanks: Double
+    while (change > epsilon) {
+        previousRanks = ranks.map { it.value }.reduce { acc, r -> acc + r }
+        for (node in nodes) {
+            ranks[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+        }
+        change = ranks.map { it.value }.reduce { acc, r -> acc + r } - previousRanks
+        println("change: $change, time: ${LocalTime.now()}")
+    }
+
+    // val startNode = nodes.random()
+    // fun calculate(node: Int) {
+    //     if (change < epsilon) return
+    //     ranks[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+    //     for (child in graph.getValue(node)) calculate(child)
+    // }
+    // calculate(startNode)
+
+    // while (change > epsilon) {
+    //     graph.keys.asSequence()
+    //         .map { graphReverse.getOrDefault(it, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!!/graph.getValue(i).size }) }
+    //         .forEachIndexed {
+    //                 index, rank -> ranks[index] = rank }
+    // }
+}
+
+fun constructGraphs() {
+    val sourceFilePath = Path.of("../graph-analysis/src/main/resources/sample-graph.txt")
+
+    graph = Files.newBufferedReader(sourceFilePath)
+        .lineSequence()
+        .onEach { line -> nodes.addAll(line.split(" ").map { it.toInt() }) }
+        .groupBy({ it.substringBefore(" ").toInt() }, { it.substringAfter(" ").toInt() })
+        .toMutableMap()
+
+    graphReverse = Files.newBufferedReader(sourceFilePath)
+        .lineSequence()
+        .groupBy({ it.substringAfter(" ").toInt() }, { it.substringBefore(" ").toInt() })
+        .toMutableMap()
 }

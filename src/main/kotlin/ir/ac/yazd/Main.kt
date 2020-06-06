@@ -23,6 +23,7 @@ val nodes = mutableSetOf<Int>()
 lateinit var graph: Map<Int, List<Int>>
 lateinit var graphReverse: Map<Int, List<Int>>
 var ranks: MutableMap<Int, Double> = mutableMapOf()
+val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 
 @ExperimentalStdlibApi
 fun main() {
@@ -31,9 +32,9 @@ fun main() {
     // val duration = Duration.between(startTime, Instant.now())
     // println("Time: ${duration.toMinutes()}m")
 
-    // query()
+    query()
 
-    createPageRank()
+    // createPageRank()
 }
 
 @ExperimentalStdlibApi
@@ -92,6 +93,8 @@ fun query() {
             }
             parser.parse(Files.newInputStream(it), handler)
         }
+
+    println(precisions.map { it.value / 50 /* 50=number of queries */ })
 }
 
 fun search(terms: List<String>, docs: Map<Int, Boolean>) {
@@ -119,15 +122,18 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>) {
         .add(titleQuery, Occur.SHOULD)
         .add(bodyQuery, Occur.SHOULD)
         .build()
-    val hits = searcher.search(query, 20).scoreDocs
 
-    val precision = hits
-        .filter { docs.containsKey(getDocId(searcher, it.doc)) }
-        .map { if (docs.getValue(getDocId(searcher, it.doc))) 1.0 else 0.0 }
-        .fold(0.0) { acc, b -> acc + b }
-        .div(hits.size)
-
-    println("${precision * 100}%")
+    for (n in precisions.keys) {
+        val hits = searcher.search(query, n).scoreDocs
+        val precision = hits
+            .filter { docs.containsKey(getDocId(searcher, it.doc)) }
+            .map { if (docs.getValue(getDocId(searcher, it.doc))) 1.0 else 0.0 }
+            .fold(0.0) { acc, b -> acc + b }
+            .div(hits.size)
+        precisions.merge(n, precision) { old, new -> old + if (new.isNaN()) 0.0 else new }
+        println("P@$n: ${precision * 100}%")
+    }
+    println("----------------")
 
     reader.close()
     directory.close()

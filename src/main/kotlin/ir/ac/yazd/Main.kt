@@ -146,7 +146,8 @@ fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {
 
 fun createPageRank() {
     constructGraphs()
-    graph.keys.forEach { ranks[it] = 1.0 / graph.size }
+    graph.keys.forEach { ranks[it] = 1.0 / nodes.size }
+    val dampingFactor = 0.85
     val epsilon = 1.0 / 1000000
     var change = 1.0
 
@@ -159,7 +160,8 @@ fun createPageRank() {
     while (change > epsilon) {
         previousRanks = ranks.map { it.value }.reduce { acc, r -> acc + r }
         for (node in nodes) {
-            ranks[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+            ranks[node] = (1 - dampingFactor) / nodes.size +
+                        dampingFactor * graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
         }
         change = (ranks.map { it.value }.reduce { acc, r -> acc + r } - previousRanks).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")

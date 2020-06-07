@@ -8,6 +8,7 @@ import org.apache.lucene.document.TextField
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.index.IndexWriterConfig.OpenMode.CREATE
+import org.apache.lucene.search.similarities.BM25Similarity
 import org.apache.lucene.store.MMapDirectory
 import java.nio.file.Path
 
@@ -24,6 +25,7 @@ class Indexer {
     init {
         config.openMode = CREATE
         config.ramBufferSizeMB = 128.0 // To increase performance
+        config.similarity = BM25Similarity() // NOTE: This should be same as the one used when searching
     }
 
     fun index(docId: Int, url: String, title: String, body: String) {

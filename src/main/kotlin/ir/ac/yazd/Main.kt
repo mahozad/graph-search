@@ -14,6 +14,8 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
@@ -146,6 +148,8 @@ fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {
 }
 
 fun createPageRank() {
+    val startTime = Instant.now()
+
     constructGraphs()
     graph.keys.forEach { scores[it] = 1.0 / nodes.size }
     val dampingFactor = 0.85
@@ -174,20 +178,7 @@ fun createPageRank() {
     val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)
     bufferedWriter.write(result).also { bufferedWriter.close() }
 
-    // val startNode = nodes.random()
-    // fun calculate(node: Int) {
-    //     if (change < epsilon) return
-    //     scores[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + scores[i]!! / graph.getValue(i).size })
-    //     for (child in graph.getValue(node)) calculate(child)
-    // }
-    // calculate(startNode)
-
-    // while (change > epsilon) {
-    //     graph.keys.asSequence()
-    //         .map { graphReverse.getOrDefault(it, emptyList()).fold(0.0, { acc, i -> acc + scores[i]!!/graph.getValue(i).size }) }
-    //         .forEachIndexed {
-    //                 index, rank -> scores[index] = rank }
-    // }
+    println("Time: ${Duration.between(startTime, Instant.now()).toMinutes()}m")
 }
 
 fun constructGraphs() {

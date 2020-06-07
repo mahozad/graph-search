@@ -13,6 +13,7 @@ import org.xml.sax.helpers.DefaultHandler
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.LocalTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
@@ -167,6 +168,10 @@ fun createPageRank() {
         change = (ranks.map { it.value }.reduce(Double::plus) - previousRanks).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
+    val result = ranks.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
+    val resultPath = Path.of("ranks.txt")
+    val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)
+    bufferedWriter.write(result).also { bufferedWriter.close() }
 
     // val startNode = nodes.random()
     // fun calculate(node: Int) {

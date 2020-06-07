@@ -24,7 +24,7 @@ import kotlin.math.absoluteValue
 val nodes = mutableSetOf<Int>()
 lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
-var ranks: MutableMap<Int, Double> = mutableMapOf()
+var scores: MutableMap<Int, Double> = mutableMapOf()
 val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 
 @ExperimentalStdlibApi
@@ -147,7 +147,7 @@ fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {
 
 fun createPageRank() {
     constructGraphs()
-    graph.keys.forEach { ranks[it] = 1.0 / nodes.size }
+    graph.keys.forEach { scores[it] = 1.0 / nodes.size }
     val dampingFactor = 0.85
     val epsilon = 1.0 / (1.0E6 * nodes.size) // == score of each node (on average) should change more than 1E6
     var change = 1.0
@@ -159,17 +159,17 @@ fun createPageRank() {
 
     var previousRanks: Double
     while (change > epsilon) {
-        previousRanks = ranks.values.sum()
+        previousRanks = scores.values.sum()
 
         for (node in nodes) {
-            ranks[node] = (1 - dampingFactor) / nodes.size +
-                    dampingFactor * graphReverse.getOrDefault(node, emptyList()).sumByDouble { ranks[it]!!/graph.getValue(it).size }
+            scores[node] = (1 - dampingFactor) / nodes.size +
+                    dampingFactor * graphReverse.getOrDefault(node, emptyList()).sumByDouble { scores[it]!!/graph.getValue(it).size }
         }
-        change = (ranks.values.sum() - previousRanks).absoluteValue
+        change = (scores.values.sum() - previousRanks).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
-    val result = ranks.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
-    val resultPath = Path.of("ranks.txt")
+    val result = scores.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
+    val resultPath = Path.of("scores.txt")
     Files.deleteIfExists(resultPath)
     val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)
     bufferedWriter.write(result).also { bufferedWriter.close() }
@@ -177,16 +177,16 @@ fun createPageRank() {
     // val startNode = nodes.random()
     // fun calculate(node: Int) {
     //     if (change < epsilon) return
-    //     ranks[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+    //     scores[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + scores[i]!! / graph.getValue(i).size })
     //     for (child in graph.getValue(node)) calculate(child)
     // }
     // calculate(startNode)
 
     // while (change > epsilon) {
     //     graph.keys.asSequence()
-    //         .map { graphReverse.getOrDefault(it, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!!/graph.getValue(i).size }) }
+    //         .map { graphReverse.getOrDefault(it, emptyList()).fold(0.0, { acc, i -> acc + scores[i]!!/graph.getValue(i).size }) }
     //         .forEachIndexed {
-    //                 index, rank -> ranks[index] = rank }
+    //                 index, rank -> scores[index] = rank }
     // }
 }
 

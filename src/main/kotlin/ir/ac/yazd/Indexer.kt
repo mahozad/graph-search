@@ -11,7 +11,7 @@ import org.apache.lucene.index.IndexWriterConfig.OpenMode.CREATE
 import org.apache.lucene.store.MMapDirectory
 import java.nio.file.Path
 
-private val indexPath = Path.of("E:/index")
+private val indexPath = Path.of("E:/index/")
 
 class Indexer {
 

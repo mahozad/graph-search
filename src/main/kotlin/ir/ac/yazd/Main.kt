@@ -18,10 +18,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
 import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
+import kotlin.math.absoluteValue
 
 val nodes = mutableSetOf<Int>()
-lateinit var graph: Map<Int, List<Int>>
-lateinit var graphReverse: Map<Int, List<Int>>
+lateinit var graph: MutableMap<Int, List<Int>>
+lateinit var graphReverse: MutableMap<Int, List<Int>>
 var ranks: MutableMap<Int, Double> = mutableMapOf()
 val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 
@@ -32,9 +33,9 @@ fun main() {
     // val duration = Duration.between(startTime, Instant.now())
     // println("Time: ${duration.toMinutes()}m")
 
-    query()
+    // query()
 
-    // createPageRank()
+    createPageRank()
 }
 
 @ExperimentalStdlibApi
@@ -193,4 +194,9 @@ fun constructGraphs() {
         .lineSequence()
         .groupBy({ it.substringAfter(" ").toInt() }, { it.substringBefore(" ").toInt() })
         .toMutableMap()
+
+    for (node in nodes) {
+        graph.putIfAbsent(node, emptyList())
+        graphReverse.putIfAbsent(node, emptyList())
+    }
 }

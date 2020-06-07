@@ -170,6 +170,7 @@ fun createPageRank() {
     }
     val result = ranks.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
     val resultPath = Path.of("ranks.txt")
+    Files.deleteIfExists(resultPath)
     val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)
     bufferedWriter.write(result).also { bufferedWriter.close() }
 

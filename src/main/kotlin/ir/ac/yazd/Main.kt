@@ -152,22 +152,22 @@ fun createPageRank() {
     val epsilon = 1.0 / (1.0E6 * nodes.size) // == score of each node (on average) should change more than 1E6
     var change = 1.0
 
-    // initially PageRank of all pages is equal to 1/n (n = number of nodes in graph)
-    // while true (while the change is greater than epsilon=approximation error e.g. 1/1000000)
-    //      for every node in graph
-    //          PageRank(node) = ∑PageRank(q)/outDegree(q)
+    // initially PageRank of all pages is equal to 1/N (N = number of nodes in graph)
+    // while the change in scores is greater than epsilon (approximation error) e.g. 1/1000000)
+    //     for every node in graph
+    //         PageRank(node) = (1 - d) / N + d * ∑PageRank(q)/outDegree(q)
 
-    var previousRanks: Double
     while (change > epsilon) {
-        previousRanks = scores.values.sum()
-
+        val previousScores = scores.values.sum()
         for (node in nodes) {
             scores[node] = (1 - dampingFactor) / nodes.size +
-                    dampingFactor * graphReverse.getOrDefault(node, emptyList()).sumByDouble { scores[it]!!/graph.getValue(it).size }
+                    dampingFactor * graphReverse.getOrDefault(node, emptyList())
+                .sumByDouble { scores[it]!! / graph[it]!!.size }
         }
-        change = (scores.values.sum() - previousRanks).absoluteValue
+        change = (scores.values.sum() - previousScores).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
+
     val result = scores.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
     val resultPath = Path.of("scores.txt")
     Files.deleteIfExists(resultPath)

@@ -70,6 +70,8 @@ fun index() {
 
 @ExperimentalStdlibApi
 fun query() {
+    val startTime = Instant.now()
+
     val path = Path.of("data/queries")
     Files.find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
         .forEach {
@@ -99,6 +101,7 @@ fun query() {
         }
 
     println(precisions.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
+    println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
 fun search(terms: List<String>, docs: Map<Int, Boolean>) {

@@ -161,7 +161,7 @@ fun createPageRank() {
         for (node in nodes) {
             ranks[node] = graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
         }
-        change = ranks.map { it.value }.reduce { acc, r -> acc + r } - previousRanks
+        change = (ranks.map { it.value }.reduce { acc, r -> acc + r } - previousRanks).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
 

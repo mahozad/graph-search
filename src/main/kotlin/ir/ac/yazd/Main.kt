@@ -98,7 +98,7 @@ fun query() {
             parser.parse(Files.newInputStream(it), handler)
         }
 
-    println(precisions.map { it.value / 50 /* 50=number of queries */ })
+    println(precisions.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
 }
 
 fun search(terms: List<String>, docs: Map<Int, Boolean>) {

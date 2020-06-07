@@ -158,12 +158,13 @@ fun createPageRank() {
 
     var previousRanks: Double
     while (change > epsilon) {
-        previousRanks = ranks.map { it.value }.reduce { acc, r -> acc + r }
+        previousRanks = ranks.map { it.value }.reduce(Double::plus)
+
         for (node in nodes) {
             ranks[node] = (1 - dampingFactor) / nodes.size +
                         dampingFactor * graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
         }
-        change = (ranks.map { it.value }.reduce { acc, r -> acc + r } - previousRanks).absoluteValue
+        change = (ranks.map { it.value }.reduce(Double::plus) - previousRanks).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
 

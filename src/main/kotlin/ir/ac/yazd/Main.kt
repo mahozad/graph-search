@@ -18,6 +18,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
 import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
+import kotlin.collections.LinkedHashSet
 import kotlin.math.absoluteValue
 
 val nodes = mutableSetOf<Int>()
@@ -148,7 +149,7 @@ fun createPageRank() {
     constructGraphs()
     graph.keys.forEach { ranks[it] = 1.0 / nodes.size }
     val dampingFactor = 0.85
-    val epsilon = 1.0 / 1000000
+    val epsilon = 1.0 / 100_000_000
     var change = 1.0
 
     // initially PageRank of all pages is equal to 1/n (n = number of nodes in graph)
@@ -157,16 +158,25 @@ fun createPageRank() {
     //          PageRank(node) = ∑PageRank(q)/outDegree(q)
 
     var previousRanks: Double
-    while (change > epsilon) {
-        previousRanks = ranks.map { it.value }.reduce(Double::plus)
+    val nodesToUpdate = LinkedHashSet(nodes) // or linkedSetOf<Int>()
+    // for (node in nodes) {
+    //     ranks[node] = (1 - dampingFactor) / nodes.size +
+    //             dampingFactor * graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+    // }
 
-        for (node in nodes) {
-            ranks[node] = (1 - dampingFactor) / nodes.size +
-                        dampingFactor * graphReverse.getOrDefault(node, emptyList()).fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
-        }
+    while ((change == 0.0 || change > epsilon) && nodesToUpdate.isNotEmpty()) {
+        previousRanks = ranks.map { it.value }.reduce(Double::plus)
+        val node = nodesToUpdate.find { nodesToUpdate.indexOf(it) == 0 }!!
+        nodesToUpdate.remove(node)
+        ranks[node] = (1 - dampingFactor) / nodes.size +
+                dampingFactor * graphReverse.getOrDefault(node, emptyList())
+            .fold(0.0, { acc, i -> acc + ranks[i]!! / graph.getValue(i).size })
+        nodesToUpdate.addAll(graph.getValue(node))
         change = (ranks.map { it.value }.reduce(Double::plus) - previousRanks).absoluteValue
-        println("change: $change, time: ${LocalTime.now()}")
+        println("change: $change, time: ${LocalTime.now()} nodesToUpdate: ${nodesToUpdate.size}")
     }
+    println("========================")
+    // ranks.forEach { println(it) }
 
     // val startNode = nodes.random()
     // fun calculate(node: Int) {
@@ -185,7 +195,7 @@ fun createPageRank() {
 }
 
 fun constructGraphs() {
-    val sourceFilePath = Path.of("../graph-analysis/src/main/resources/sample-graph.txt")
+    val sourceFilePath = Path.of("../graph-analysis/src/main/resources/graph.txt")
 
     graph = Files.newBufferedReader(sourceFilePath)
         .lineSequence()

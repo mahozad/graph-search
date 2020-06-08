@@ -4,6 +4,7 @@ import com.github.junrar.Archive
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.FeatureField
 import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.Term
 import org.apache.lucene.search.*
 import org.apache.lucene.search.BooleanClause.Occur
 import org.apache.lucene.search.similarities.BM25Similarity
@@ -145,12 +146,58 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStr
             .add(BoostQuery(featureQuery, 0.7f), Occur.SHOULD)
             .build()
     } else {
-        val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
-        val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
-        query = BooleanQuery.Builder()
-            .add(titleQuery, Occur.SHOULD)
-            .add(bodyQuery, Occur.SHOULD)
+        // use FuzzyLikeThisQuery
+
+        val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it),0) }
+        val titleB = BooleanQuery.Builder()
+        titleFuzzyQueries.forEach { titleB.add(it, Occur.SHOULD) }
+        val titleFQ = titleB.build()
+
+        val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it),1) }
+        val bodyB = BooleanQuery.Builder()
+        bodyFuzzyQueries.forEach { bodyB.add(it, Occur.MUST) }
+        val bodyFQ = bodyB.build()
+
+        val queryF = BooleanQuery.Builder()
+            .add(titleFQ, Occur.SHOULD)
+            .add(bodyFQ, Occur.MUST)
             .build()
+
+        val titlePQ = PhraseQuery(11, "TITLE", *terms.toTypedArray())
+        val bodyPQ = PhraseQuery(32, "BODY", *terms.toTypedArray())
+        val queryP = BooleanQuery.Builder()
+            .add(titlePQ, Occur.SHOULD)
+            .add(bodyPQ, Occur.MUST)
+            .build()
+
+        query = BooleanQuery.Builder()
+            .add(queryF, Occur.SHOULD)
+            .add(queryP, Occur.SHOULD)
+            .build()
+
+
+        // val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it)) }
+        // val titleB = BooleanQuery.Builder()
+        // titleFuzzyQueries.forEach { titleB.add(it, Occur.SHOULD) }
+        // val titleQ = titleB.build()
+        //
+        // val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it)) }
+        // val bodyB = BooleanQuery.Builder()
+        // bodyFuzzyQueries.forEach { bodyB.add(it, Occur.SHOULD) }
+        // val bodyQ = bodyB.build()
+        //
+        // query = BooleanQuery.Builder()
+        //     .add(titleQ, Occur.SHOULD)
+        //     .add(bodyQ, Occur.SHOULD)
+        //     .build()
+
+
+        // val titleQuery = PhraseQuery(11, "TITLE", *terms.toTypedArray())
+        // val bodyQuery = PhraseQuery(32, "BODY", *terms.toTypedArray())
+        // query = BooleanQuery.Builder()
+        //     .add(titleQuery, Occur.SHOULD)
+        //     .add(bodyQuery, Occur.MUST)
+        //     .build()
     }
 
     for (n in precisions.keys) {

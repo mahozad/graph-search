@@ -2,6 +2,7 @@ package ir.ac.yazd
 
 import com.github.junrar.Archive
 import org.apache.lucene.analysis.standard.StandardAnalyzer
+import org.apache.lucene.document.FeatureField
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.*
 import org.apache.lucene.search.BooleanClause.Occur
@@ -29,27 +30,32 @@ lateinit var graphReverse: MutableMap<Int, List<Int>>
 var scores: MutableMap<Int, Double> = mutableMapOf()
 val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 
-@ExperimentalStdlibApi
-fun main() {
-    // val startTime = Instant.now()
-    // index()
-    // val duration = Duration.between(startTime, Instant.now())
-    // println("Time: ${duration.toMinutes()}m")
-
-    // query()
-
-    createPageRank()
+enum class ScoreStrategy {
+    WITH_PAGE_RANK,
+    WITHOUT_PAGE_RANK
 }
 
 @ExperimentalStdlibApi
-fun index() {
+fun main() {
+    // val startTime = Instant.now()
+    // index(ScoreStrategy.WITHOUT_PAGE_RANK)
+    // val duration = Duration.between(startTime, Instant.now())
+    // println("Time: ${duration.toMinutes()}m")
+
+    // createPageRank()
+
+    query(ScoreStrategy.WITHOUT_PAGE_RANK)
+}
+
+@ExperimentalStdlibApi
+fun index(scoreStrategy: ScoreStrategy) {
     val sourceFiles = arrayOf(
         File("data/WIR-Part1.rar"),
         File("data/WIR-Part2.rar")
     )
     // NOTE: Lucene IndexWriter is fully thread-safe
     val executorService = Executors.newFixedThreadPool(4)
-    val indexer = Indexer()
+    val indexer = Indexer(scoreStrategy)
 
     for (sourceFile in sourceFiles) {
         val archive = Archive(sourceFile, null)
@@ -69,7 +75,7 @@ fun index() {
 }
 
 @ExperimentalStdlibApi
-fun query() {
+fun query(scoreStrategy: ScoreStrategy) {
     val startTime = Instant.now()
 
     val path = Path.of("data/queries")
@@ -94,7 +100,7 @@ fun query() {
                 }
 
                 override fun endDocument() {
-                    search(terms, labels)
+                    search(terms, labels, scoreStrategy)
                 }
             }
             parser.parse(Files.newInputStream(it), handler)
@@ -104,8 +110,9 @@ fun query() {
     println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
-fun search(terms: List<String>, docs: Map<Int, Boolean>) {
-    val directory: Directory = MMapDirectory(Path.of("E:/index/"))
+fun search(terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
+    val indexPath = if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
+    val directory: Directory = MMapDirectory(indexPath)
     val reader = DirectoryReader.open(directory)
     val searcher = IndexSearcher(reader)
     // NOTE: This should be same as the one used when indexing
@@ -124,19 +131,34 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>) {
     // val parser = QueryParser("TITLE", analyzer)
     // val query = parser.parse(input)
     // OR
-    val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
-    val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
-    val query: Query = BooleanQuery.Builder()
-        .add(titleQuery, Occur.SHOULD)
-        .add(bodyQuery, Occur.SHOULD)
-        .build()
+    val query: Query
+    if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) {
+        val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
+        val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
+        val originalQuery: Query = BooleanQuery.Builder()
+            .add(titleQuery, Occur.SHOULD)
+            .add(bodyQuery, Occur.SHOULD)
+            .build()
+        val featureQuery = FeatureField.newSaturationQuery("Features", "PageRank")
+        query = BooleanQuery.Builder()
+            .add(originalQuery, Occur.MUST)
+            .add(BoostQuery(featureQuery, 0.7f), Occur.SHOULD)
+            .build()
+    } else {
+        val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
+        val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
+        query = BooleanQuery.Builder()
+            .add(titleQuery, Occur.SHOULD)
+            .add(bodyQuery, Occur.SHOULD)
+            .build()
+    }
 
     for (n in precisions.keys) {
         val hits = searcher.search(query, n).scoreDocs
         val precision = hits
             .filter { docs.containsKey(getDocId(searcher, it.doc)) }
             .map { if (docs.getValue(getDocId(searcher, it.doc))) 1.0 else 0.0 }
-            .fold(0.0) { acc, b -> acc + b }
+            .sum()
             .div(hits.size)
         precisions.merge(n, precision) { old, new -> old + if (new.isNaN()) 0.0 else new }
         println("P@$n: ${precision * 100}%")

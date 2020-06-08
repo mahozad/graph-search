@@ -172,7 +172,7 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStr
 
         query = BooleanQuery.Builder()
             .add(queryF, Occur.SHOULD)
-            .add(queryP, Occur.SHOULD)
+            .add(BoostQuery(queryP,0.7f), Occur.SHOULD)
             .build()
 
 

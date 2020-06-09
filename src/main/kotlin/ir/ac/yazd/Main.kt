@@ -124,7 +124,7 @@ fun query(scoreStrategy: ScoreStrategy) {
     println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
-fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
+fun search(queryFile: String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
     // TermsQuery class OR FuzzyLikeThisQuery class
     // OR
     // val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
@@ -181,18 +181,18 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
 
 
         val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it), 0) }
-        val titleB = BooleanQuery.Builder()
-        titleFuzzyQueries.forEach { titleB.add(it, Occur.MUST) }
-        val titleQ = titleB.build()
+        val titleBuilder = BooleanQuery.Builder()
+        titleFuzzyQueries.forEach { titleBuilder.add(it, Occur.MUST) }
+        val titleQuery = titleBuilder.build()
 
         val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it), 0) }
-        val bodyB = BooleanQuery.Builder()
-        bodyFuzzyQueries.forEach { bodyB.add(it, Occur.SHOULD) }
-        val bodyQ = bodyB.build()
+        val bodyBuilder = BooleanQuery.Builder()
+        bodyFuzzyQueries.forEach { bodyBuilder.add(it, Occur.SHOULD) }
+        val bodyQuery = bodyBuilder.build()
 
         query = BooleanQuery.Builder()
-            .add(titleQ, Occur.SHOULD)
-            .add(bodyQ, Occur.SHOULD)
+            .add(titleQuery, Occur.SHOULD)
+            .add(BoostQuery(bodyQuery, 10.0f), Occur.SHOULD)
             .build()
 
 
@@ -205,7 +205,7 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
         //     .build()
     }
 
-    println("$whichQuery:")
+    println("$queryFile:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
     for (n in precisionSums.keys) {

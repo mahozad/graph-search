@@ -30,6 +30,10 @@ lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
 var scores: MutableMap<Int, Double> = mutableMapOf()
 val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
+lateinit var indexPath: Path
+lateinit var directory: Directory
+lateinit var reader: DirectoryReader
+lateinit var searcher: IndexSearcher
 
 enum class ScoreStrategy {
     WITH_PAGE_RANK,
@@ -45,7 +49,19 @@ fun main() {
 
     // createPageRank()
 
-    query(ScoreStrategy.WITHOUT_PAGE_RANK)
+    val scoreStrategy = ScoreStrategy.WITHOUT_PAGE_RANK
+    indexPath = if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
+    directory = MMapDirectory(indexPath)
+    reader = DirectoryReader.open(directory)
+    searcher = IndexSearcher(reader)
+    // NOTE: This should be same as the one used when indexing
+    searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for ranking docs
+    val analyzer = StandardAnalyzer()
+
+    query(scoreStrategy)
+
+    reader.close()
+    directory.close()
 }
 
 @ExperimentalStdlibApi
@@ -113,15 +129,7 @@ fun query(scoreStrategy: ScoreStrategy) {
 }
 
 fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
-    val indexPath = if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
-    val directory: Directory = MMapDirectory(indexPath)
-    val reader = DirectoryReader.open(directory)
-    val searcher = IndexSearcher(reader)
-    // NOTE: This should be same as the one used when indexing
-    searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for ranking docs
-    val analyzer = StandardAnalyzer()
-
-    // TermsQuery class
+    // TermsQuery class OR FuzzyLikeThisQuery class
     // OR
     // val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
     // OR
@@ -147,14 +155,12 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
             .add(BoostQuery(featureQuery, 0.7f), Occur.SHOULD)
             .build()
     } else {
-        // use FuzzyLikeThisQuery
-
-        val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it),2) }
+        val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it), 2) }
         val titleB = BooleanQuery.Builder()
         titleFuzzyQueries.forEach { titleB.add(it, Occur.MUST) }
         val titleFQ = titleB.build()
 
-        val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it),0) }
+        val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it), 0) }
         val bodyB = BooleanQuery.Builder()
         bodyFuzzyQueries.forEach { bodyB.add(it, Occur.SHOULD) }
         val bodyFQ = bodyB.build()
@@ -177,6 +183,7 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
             .build()
 
 
+
         // val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it), 2) }
         // val titleB = BooleanQuery.Builder()
         // titleFuzzyQueries.forEach { titleB.add(it, Occur.MUST) }
@@ -191,6 +198,7 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
         //     .add(titleQ, Occur.SHOULD)
         //     .add(bodyQ, Occur.SHOULD)
         //     .build()
+
 
 
         // val titleQuery = PhraseQuery(11, "TITLE", *terms.toTypedArray())
@@ -213,9 +221,6 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
         println("P@$n: ${precision * 100}%")
     }
     println("----------------")
-
-    reader.close()
-    directory.close()
 }
 
 fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {

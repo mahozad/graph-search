@@ -151,8 +151,8 @@ fun search(q: Query) {
     // OR
     val query: org.apache.lucene.search.Query
     if (scoreStrategy == WITH_PAGE_RANK) {
-        val titleQuery = PhraseQuery(10, "TITLE", *q.terms.toTypedArray())
-        val bodyQuery = PhraseQuery(10, "BODY", *q.terms.toTypedArray())
+        val titleQuery = PhraseQuery(11, "TITLE", *q.terms.toTypedArray())
+        val bodyQuery = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         val originalQuery = BooleanQuery.Builder()
             .add(titleQuery, Occur.SHOULD)
             .add(bodyQuery, Occur.SHOULD)
@@ -160,7 +160,7 @@ fun search(q: Query) {
         val featureQuery = FeatureField.newSaturationQuery("Features", "PageRank")
         query = BooleanQuery.Builder()
             .add(originalQuery, Occur.MUST)
-            .add(BoostQuery(featureQuery, 0.7f), Occur.SHOULD)
+            .add(featureQuery, Occur.SHOULD)
             .build()
     } else {
         // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 2) }

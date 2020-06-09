@@ -29,7 +29,7 @@ val nodes = mutableSetOf<Int>()
 lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
 var scores: MutableMap<Int, Double> = mutableMapOf()
-val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
+val precisionSums = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 lateinit var searcher: IndexSearcher
 
 enum class ScoreStrategy {
@@ -120,7 +120,7 @@ fun query(scoreStrategy: ScoreStrategy) {
             parser.parse(Files.newInputStream(it), handler)
         }
 
-    println(precisions.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
+    println(precisionSums.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
     println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
@@ -206,22 +206,22 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
     }
 
     println("$whichQuery:")
-    for (n in precisions.keys) {
-        val hits = searcher.search(query, n).scoreDocs
+    // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
+    val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
+    for (n in precisionSums.keys) {
         val precision = hits
-            .filter { docs.containsKey(getDocId(searcher, it.doc)) }
-            .map { if (docs.getValue(getDocId(searcher, it.doc))) 1.0 else 0.0 }
+            .filter { docs.containsKey(getDocId(it.doc)) }
+            .take(n)
+            .map { if (docs.getValue(getDocId(it.doc))) 1.0 else 0.0 }
             .sum()
-            .div(hits.size)
-        precisions.merge(n, precision) { old, new -> old + if (new.isNaN()) 0.0 else new }
+            .div(n)
+        precisionSums.merge(n, precision, Double::plus)
         println("P@$n: ${precision * 100}%")
     }
     println("----------------")
 }
 
-fun getDocId(searcher: IndexSearcher, docNumber: Int): Int {
-    return searcher.doc(docNumber).getField("DOCID").numericValue().toInt()
-}
+fun getDocId(docNumber: Int) = searcher.doc(docNumber).getField("DOCID").numericValue().toInt()
 
 fun createPageRank() {
     val startTime = Instant.now()

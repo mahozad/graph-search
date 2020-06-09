@@ -9,21 +9,21 @@ Index time:
 PageRank time: 5m
 
 Search time & Precisions:
-    (With PageRank) & (FuzzyQuery) = 4s
+    (With PageRank) & (FuzzyQuery) = 3s
        	P@05: 0.462
        	P@10: 0.403
        	P@20: 0.449
-	(Without PageRank) & (FuzzyQuery) = 12s
-		P@05: 0.692
-    	P@10: 0.660
-    	P@20: 0.609
-    (Without PageRank) & (PhraseQuery) = 4s
-	    P@05: 0.482
-	    P@10: 0.472
-	    P@20: 0.444
+	(Without PageRank) & (FuzzyQuery) = 6s
+		P@05: 0.728
+    	P@10: 0.676
+    	P@20: 0.629
+    (Without PageRank) & (PhraseQuery) = 3s
+	    P@05: 0.536
+	    P@10: 0.470
+	    P@20: 0.381
     (Without PageRank) & (FuzzyQuery | PhraseQuery)
-               ...      ...      ...      ...      ...    sh0 mu1  mu2 sh0
-       	P@05: 0.652 -> 0.652 -> 0.648 -> 0.676 -> 0.672 -> 0.688 -> 0.692
-       	P@10: 0.560 -> 0.578 -> 0.606 -> 0.620 -> 0.626 -> 0.624 -> 0.654
-       	P@20: 0.507 -> 0.519 -> 0.526 -> 0.540 -> 0.542 -> 0.544 -> 0.619
-       	                                                    18s      28s
+               ...      ...      ...      ...      ...    sh0 mu1  mu2 sh0  mu2 sh0
+       	P@05: 0.652 -> 0.652 -> 0.648 -> 0.676 -> 0.672 -> 0.688 -> 0.692 -> 0.712
+       	P@10: 0.560 -> 0.578 -> 0.606 -> 0.620 -> 0.626 -> 0.624 -> 0.654 -> 0.670
+       	P@20: 0.507 -> 0.519 -> 0.526 -> 0.540 -> 0.542 -> 0.544 -> 0.619 -> 0.624
+       	                                                    18s      12s      11s

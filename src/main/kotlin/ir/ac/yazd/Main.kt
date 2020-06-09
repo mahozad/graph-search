@@ -1,6 +1,8 @@
 package ir.ac.yazd
 
 import com.github.junrar.Archive
+import ir.ac.yazd.ScoreStrategy.WITHOUT_PAGE_RANK
+import ir.ac.yazd.ScoreStrategy.WITH_PAGE_RANK
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.FeatureField
 import org.apache.lucene.index.DirectoryReader
@@ -8,8 +10,7 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.search.*
 import org.apache.lucene.search.BooleanClause.Occur
 import org.apache.lucene.search.similarities.BM25Similarity
-import org.apache.lucene.store.Directory
-import org.apache.lucene.store.MMapDirectory
+import org.apache.lucene.store.*
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import java.io.File
@@ -30,9 +31,6 @@ lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
 var scores: MutableMap<Int, Double> = mutableMapOf()
 val precisions = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
-lateinit var indexPath: Path
-lateinit var directory: Directory
-lateinit var reader: DirectoryReader
 lateinit var searcher: IndexSearcher
 
 enum class ScoreStrategy {
@@ -49,10 +47,10 @@ fun main() {
 
     // createPageRank()
 
-    val scoreStrategy = ScoreStrategy.WITHOUT_PAGE_RANK
-    indexPath = if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
-    directory = MMapDirectory(indexPath)
-    reader = DirectoryReader.open(directory)
+    val scoreStrategy = WITHOUT_PAGE_RANK
+    val indexPath = if (scoreStrategy == WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
+    val directory = MMapDirectory(indexPath)
+    val reader = DirectoryReader.open(directory)
     searcher = IndexSearcher(reader)
     // NOTE: This should be same as the one used when indexing
     searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for ranking docs
@@ -142,7 +140,7 @@ fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scor
     // val query = parser.parse(input)
     // OR
     val query: Query
-    if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) {
+    if (scoreStrategy == WITH_PAGE_RANK) {
         val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
         val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
         val originalQuery: Query = BooleanQuery.Builder()

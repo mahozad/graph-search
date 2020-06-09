@@ -92,29 +92,30 @@ fun query(scoreStrategy: ScoreStrategy) {
     val startTime = Instant.now()
 
     val path = Path.of("data/queries")
-    Files.find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
+    val parser = SAXParserFactory.newInstance().newSAXParser()
+    Files
+        .find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
         .forEach {
-            val parser = SAXParserFactory.newInstance().newSAXParser()
-            val whichQuery = it.fileName.toString()
+            val queryFileName = it.fileName.toString()
             val handler = object : DefaultHandler() {
-                var currentElement = ""
-                var currentDocId = 0
+                var element = ""
+                var docId = 0
                 val terms = mutableListOf<String>()
                 val labels = mutableMapOf<Int, Boolean>()
 
                 override fun startElement(uri: String, localName: String, name: String, attrs: Attributes) {
-                    currentElement = name
+                    element = name
                 }
 
                 override fun characters(ch: CharArray, start: Int, length: Int) {
                     if (ch.concatToString(start, start + length) == "\n") return
-                    else if (currentElement == "word") terms.add(ch.concatToString(start, start + length))
-                    else if (currentElement == "docid") currentDocId = ch.concatToString(start, start + length).toInt()
-                    else if (currentElement == "label") labels[currentDocId] = ch.concatToString(start, start + length) == "1"
+                    else if (element == "word") terms.add(ch.concatToString(start, start + length))
+                    else if (element == "docid") docId = ch.concatToString(start, start + length).toInt()
+                    else if (element == "label") labels[docId] = ch.concatToString(start, start + length) == "1"
                 }
 
                 override fun endDocument() {
-                    search(whichQuery, terms, labels, scoreStrategy)
+                    search(queryFileName, terms, labels, scoreStrategy)
                 }
             }
             parser.parse(Files.newInputStream(it), handler)
@@ -124,7 +125,7 @@ fun query(scoreStrategy: ScoreStrategy) {
     println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
-fun search(queryFile: String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
+fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
     // TermsQuery class OR FuzzyLikeThisQuery class
     // OR
     // val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
@@ -205,7 +206,7 @@ fun search(queryFile: String, terms: List<String>, docs: Map<Int, Boolean>, scor
         //     .build()
     }
 
-    println("$queryFile:")
+    println("$queryFileName:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
     for (n in precisionSums.keys) {

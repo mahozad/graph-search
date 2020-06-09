@@ -83,6 +83,7 @@ fun query(scoreStrategy: ScoreStrategy) {
     Files.find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
         .forEach {
             val parser = SAXParserFactory.newInstance().newSAXParser()
+            val whichQuery = it.fileName.toString()
             val handler = object : DefaultHandler() {
                 var currentElement = ""
                 var currentDocId = 0
@@ -101,7 +102,7 @@ fun query(scoreStrategy: ScoreStrategy) {
                 }
 
                 override fun endDocument() {
-                    search(terms, labels, scoreStrategy)
+                    search(whichQuery, terms, labels, scoreStrategy)
                 }
             }
             parser.parse(Files.newInputStream(it), handler)
@@ -111,7 +112,7 @@ fun query(scoreStrategy: ScoreStrategy) {
     println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
 }
 
-fun search(terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
+fun search(whichQuery:String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
     val indexPath = if (scoreStrategy == ScoreStrategy.WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
     val directory: Directory = MMapDirectory(indexPath)
     val reader = DirectoryReader.open(directory)
@@ -200,6 +201,7 @@ fun search(terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStr
         //     .build()
     }
 
+    println("$whichQuery:")
     for (n in precisions.keys) {
         val hits = searcher.search(query, n).scoreDocs
         val precision = hits

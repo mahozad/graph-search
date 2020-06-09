@@ -25,6 +25,7 @@ import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
 import kotlin.math.absoluteValue
 
+val scoreStrategy = WITHOUT_PAGE_RANK
 val nodes = mutableSetOf<Int>()
 lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
@@ -46,7 +47,6 @@ fun main() {
 
     // createPageRank()
 
-    val scoreStrategy = WITHOUT_PAGE_RANK
     val indexPath = if (scoreStrategy == WITH_PAGE_RANK) Path.of("E:index-pageranked") else Path.of("E:index")
     val directory = MMapDirectory(indexPath)
     val reader = DirectoryReader.open(directory)
@@ -54,7 +54,7 @@ fun main() {
     // NOTE: This should be same as the one used when indexing
     searcher.similarity = BM25Similarity() // Use BM25 algorithm instead of TF.IDF for ranking docs
 
-    query(scoreStrategy)
+    query()
 
     reader.close()
     directory.close()
@@ -88,15 +88,14 @@ fun index(scoreStrategy: ScoreStrategy) {
 }
 
 @ExperimentalStdlibApi
-fun query(scoreStrategy: ScoreStrategy) {
-    val startTime = Instant.now()
-
+fun query() {
     val path = Path.of("data/queries")
     val parser = SAXParserFactory.newInstance().newSAXParser()
+    val queries = mutableListOf<Query>()
     Files
         .find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
+        .sorted { f1, f2 -> fileNumber(f1) - fileNumber(f2)}
         .forEach {
-            val queryFileName = it.fileName.toString()
             val handler = object : DefaultHandler() {
                 var element = ""
                 var docId = 0
@@ -115,17 +114,29 @@ fun query(scoreStrategy: ScoreStrategy) {
                 }
 
                 override fun endDocument() {
-                    search(queryFileName, terms, labels, scoreStrategy)
+                    queries.add(Query(fileNumber(it), terms, labels))
                 }
             }
             parser.parse(Files.newInputStream(it), handler)
         }
 
+    val startTime = Instant.now()
+
+    for (query in queries) search(query)
+
     println(precisionSums.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
-    println("Time: ${Duration.between(startTime, Instant.now()).toSeconds()}s")
+    println("Time: ${Duration.between(startTime, Instant.now()).toMillis()}ms")
 }
 
-fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, scoreStrategy: ScoreStrategy) {
+fun fileNumber(path:Path) = path.fileName.toString().removePrefix("query-").removeSuffix(".xml").toInt()
+
+class Query(
+    val number: Int,
+    val terms: List<String>,
+    val labels: Map<Int, Boolean>
+)
+
+fun search(q: Query) {
     // TermsQuery class OR FuzzyLikeThisQuery class
     // OR
     // val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
@@ -138,11 +149,11 @@ fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, 
     // val parser = QueryParser("TITLE", analyzer)
     // val query = parser.parse(input)
     // OR
-    val query: Query
+    val query: org.apache.lucene.search.Query
     if (scoreStrategy == WITH_PAGE_RANK) {
-        val titleQuery = PhraseQuery(10, "TITLE", *terms.toTypedArray())
-        val bodyQuery = PhraseQuery(10, "BODY", *terms.toTypedArray())
-        val originalQuery: Query = BooleanQuery.Builder()
+        val titleQuery = PhraseQuery(10, "TITLE", *q.terms.toTypedArray())
+        val bodyQuery = PhraseQuery(10, "BODY", *q.terms.toTypedArray())
+        val originalQuery = BooleanQuery.Builder()
             .add(titleQuery, Occur.SHOULD)
             .add(bodyQuery, Occur.SHOULD)
             .build()
@@ -152,12 +163,12 @@ fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, 
             .add(BoostQuery(featureQuery, 0.7f), Occur.SHOULD)
             .build()
     } else {
-        // val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it), 2) }
+        // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 2) }
         // val titleB = BooleanQuery.Builder()
         // titleFuzzyQueries.forEach { titleB.add(it, Occur.MUST) }
         // val titleFQ = titleB.build()
         //
-        // val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it), 0) }
+        // val bodyFuzzyQueries = q.terms.map { FuzzyQuery(Term("BODY", it), 0) }
         // val bodyB = BooleanQuery.Builder()
         // bodyFuzzyQueries.forEach { bodyB.add(it, Occur.SHOULD) }
         // val bodyFQ = bodyB.build()
@@ -167,8 +178,8 @@ fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, 
         //     .add(bodyFQ, Occur.MUST)
         //     .build()
         //
-        // val titlePQ = PhraseQuery(11, "TITLE", *terms.toTypedArray())
-        // val bodyPQ = PhraseQuery(32, "BODY", *terms.toTypedArray())
+        // val titlePQ = PhraseQuery(11, "TITLE", *q.terms.toTypedArray())
+        // val bodyPQ = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         // val queryP = BooleanQuery.Builder()
         //     .add(titlePQ, Occur.SHOULD)
         //     .add(bodyPQ, Occur.MUST)
@@ -181,12 +192,12 @@ fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, 
 
 
 
-        val titleFuzzyQueries = terms.map { FuzzyQuery(Term("TITLE", it), 0) }
+        val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 0) }
         val titleBuilder = BooleanQuery.Builder()
         titleFuzzyQueries.forEach { titleBuilder.add(it, Occur.MUST) }
         val titleQuery = titleBuilder.build()
 
-        val bodyFuzzyQueries = terms.map { FuzzyQuery(Term("BODY", it), 0) }
+        val bodyFuzzyQueries = q.terms.map { FuzzyQuery(Term("BODY", it), 0) }
         val bodyBuilder = BooleanQuery.Builder()
         bodyFuzzyQueries.forEach { bodyBuilder.add(it, Occur.SHOULD) }
         val bodyQuery = bodyBuilder.build()
@@ -198,22 +209,22 @@ fun search(queryFileName: String, terms: List<String>, docs: Map<Int, Boolean>, 
 
 
 
-        // val titleQuery = PhraseQuery(11, "TITLE", *terms.toTypedArray())
-        // val bodyQuery = PhraseQuery(32, "BODY", *terms.toTypedArray())
+        // val titleQuery = PhraseQuery(11, "TITLE", *q.terms.toTypedArray())
+        // val bodyQuery = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         // query = BooleanQuery.Builder()
         //     .add(titleQuery, Occur.SHOULD)
         //     .add(bodyQuery, Occur.MUST)
         //     .build()
     }
 
-    println("$queryFileName:")
+    println("Query ${q.number}:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
     for (n in precisionSums.keys) {
         val precision = hits
-            .filter { docs.containsKey(getDocId(it.doc)) }
+            .filter { q.labels.containsKey(getDocId(it.doc)) }
             .take(n)
-            .map { if (docs.getValue(getDocId(it.doc))) 1.0 else 0.0 }
+            .map { if (q.labels.getValue(getDocId(it.doc))) 1.0 else 0.0 }
             .sum()
             .div(n)
         precisionSums.merge(n, precision, Double::plus)

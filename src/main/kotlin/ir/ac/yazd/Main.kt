@@ -100,7 +100,7 @@ fun query() {
                 var element = ""
                 var docId = 0
                 val terms = mutableListOf<String>()
-                val labels = mutableMapOf<Int, Boolean>()
+                val labels = mutableMapOf<Int, Int>() // docId -> label
 
                 override fun startElement(uri: String, localName: String, name: String, attrs: Attributes) {
                     element = name
@@ -110,7 +110,7 @@ fun query() {
                     if (ch.concatToString(start, start + length) == "\n") return
                     else if (element == "word") terms.add(ch.concatToString(start, start + length))
                     else if (element == "docid") docId = ch.concatToString(start, start + length).toInt()
-                    else if (element == "label") labels[docId] = ch.concatToString(start, start + length) == "1"
+                    else if (element == "label") labels[docId] = ch.concatToString(start, start + length).toInt()
                 }
 
                 override fun endDocument() {
@@ -133,7 +133,7 @@ fun fileNumber(path:Path) = path.fileName.toString().removePrefix("query-").remo
 class Query(
     val number: Int,
     val terms: List<String>,
-    val labels: Map<Int, Boolean>
+    val labels: Map<Int, Int>
 )
 
 fun search(q: Query) {
@@ -222,10 +222,10 @@ fun search(q: Query) {
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
     for (n in precisionSums.keys) {
         val precision = hits
-            .filter { q.labels.containsKey(getDocId(it.doc)) }
+            .filter { q.labels.containsKey(it.docId) }
             .take(n)
-            .map { if (q.labels.getValue(getDocId(it.doc))) 1.0 else 0.0 }
-            .sum()
+            .sumBy { q.labels.getValue(it.docId) }
+            .toDouble()
             .div(n)
         precisionSums.merge(n, precision, Double::plus)
         println("P@$n: ${precision * 100}%")
@@ -233,7 +233,7 @@ fun search(q: Query) {
     println("----------------")
 }
 
-fun getDocId(docNumber: Int) = searcher.doc(docNumber).getField("DOCID").numericValue().toInt()
+val ScoreDoc.docId get() = searcher.doc(doc).get("DOCID").toInt()
 
 fun createPageRank() {
     val startTime = Instant.now()

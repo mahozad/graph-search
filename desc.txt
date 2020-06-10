@@ -17,11 +17,11 @@ Search time & Precisions:
 	    P@05: 0.536
 	    P@10: 0.470
 	    P@20: 0.381
-	(Without PageRank) & (FuzzyQuery) 1.9s
-		P@05: 0.760
-    	P@10: 0.692
-    	P@20: 0.659
-	(Without PageRank) & (TermQuery) 3.1s
+	(Without PageRank) & (FuzzyQuery) 9.7s
+		P@05: 0.800
+    	P@10: 0.724
+    	P@20: 0.672
+	(Without PageRank) & (TermQuery) 2.7s
 		P@05: 0.792
     	P@10: 0.722
     	P@20: 0.673

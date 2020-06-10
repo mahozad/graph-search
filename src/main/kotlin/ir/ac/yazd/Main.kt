@@ -192,9 +192,10 @@ fun search(q: Query) {
 
 
 
-        // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 0) }
+        // NOTE: FuzzyQuery with maxEdit = 0 is exactly the same as a TermQuery
+        // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 1) }
         // val titleBuilder = BooleanQuery.Builder()
-        // titleFuzzyQueries.forEach { titleBuilder.add(it, Occur.MUST) }
+        // titleFuzzyQueries.forEach { titleBuilder.add(it, Occur.SHOULD) }
         // val titleQuery = titleBuilder.build()
         //
         // val bodyFuzzyQueries = q.terms.map { FuzzyQuery(Term("BODY", it), 0) }
@@ -204,7 +205,7 @@ fun search(q: Query) {
         //
         // query = BooleanQuery.Builder()
         //     .add(titleQuery, Occur.SHOULD)
-        //     .add(BoostQuery(bodyQuery, 10.0f), Occur.SHOULD)
+        //     .add(BoostQuery(bodyQuery, 6.1f), Occur.MUST) // SHOULD and MUST yield same score
         //     .build()
 
 
@@ -221,7 +222,7 @@ fun search(q: Query) {
 
         query = BooleanQuery.Builder()
             .add(titleQuery, Occur.SHOULD)
-            .add(BoostQuery(bodyQuery, 8.2f /*or 8.6*/), Occur.SHOULD)
+            .add(BoostQuery(bodyQuery, 8.2f /*or 8.6*/), Occur.MUST) // SHOULD and MUST yield same score
             .build()
 
 

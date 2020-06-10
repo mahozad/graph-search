@@ -241,7 +241,7 @@ fun createPageRank() {
     constructGraphs()
     graph.keys.forEach { scores[it] = 1.0 / nodes.size }
     val dampingFactor = 0.85
-    val epsilon = 1.0 / (1.0E6 * nodes.size) // == score of each node (on average) should change more than 1E6
+    val epsilon = 1.0 / (1.0E10 * nodes.size) // == score of each node (on average) should change more than 1E6
     var change = 1.0
 
     // initially PageRank of all pages is equal to 1/N (N = number of nodes in graph)

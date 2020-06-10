@@ -220,6 +220,7 @@ fun search(q: Query) {
     println("Query ${q.number}:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
+    // println(searcher.explain(query, 209882))
     for (n in precisionSums.keys) {
         val precision = hits
             .filter { q.labels.containsKey(it.docId) }
@@ -252,6 +253,7 @@ fun createPageRank() {
     while (change > epsilon) {
         val previousScores = scores.values.sum()
         for (node in nodes) {
+            // / nodes.size has no effect on final scoring
             scores[node] = (1 - dampingFactor) / nodes.size +
                     dampingFactor * graphReverse.getOrDefault(node, emptyList())
                 .sumByDouble { scores[it]!! / graph[it]!!.size }

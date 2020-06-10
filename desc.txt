@@ -6,7 +6,7 @@ Index time:
 	single-thread: 30m
 	multi-thread: 17m
 
-PageRank time: 5m
+PageRank time: 11m
 
 Search time & Precisions:
     (With PageRank) & (FuzzyQuery) = 0.9s

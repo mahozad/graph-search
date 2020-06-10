@@ -163,9 +163,9 @@ fun search(q: Query) {
             .add(BoostQuery(featureQuery, 2f), Occur.SHOULD)
             .build()
     } else {
-        // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 2) }
+        // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 1) }
         // val titleB = BooleanQuery.Builder()
-        // titleFuzzyQueries.forEach { titleB.add(it, Occur.MUST) }
+        // titleFuzzyQueries.forEach { titleB.add(it, Occur.SHOULD) }
         // val titleFQ = titleB.build()
         //
         // val bodyFuzzyQueries = q.terms.map { FuzzyQuery(Term("BODY", it), 0) }
@@ -175,19 +175,19 @@ fun search(q: Query) {
         //
         // val queryF = BooleanQuery.Builder()
         //     .add(titleFQ, Occur.SHOULD)
-        //     .add(bodyFQ, Occur.MUST)
+        //     .add(BoostQuery(bodyFQ, 6.1f), Occur.MUST)
         //     .build()
         //
         // val titlePQ = PhraseQuery(11, "TITLE", *q.terms.toTypedArray())
         // val bodyPQ = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         // val queryP = BooleanQuery.Builder()
-        //     .add(titlePQ, Occur.SHOULD)
+        //     .add(titlePQ, Occur.MUST)
         //     .add(bodyPQ, Occur.MUST)
         //     .build()
         //
         // query = BooleanQuery.Builder()
         //     .add(queryF, Occur.SHOULD)
-        //     .add(BoostQuery(queryP,0.8f), Occur.SHOULD)
+        //     .add(BoostQuery(queryP,0.3f), Occur.SHOULD)
         //     .build()
 
 

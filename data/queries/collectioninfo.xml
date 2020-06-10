@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<collectioninfo>
+<name>WEBIR</name>
+<docnum>997252</docnum>
+<streamnum>5</streamnum>
+<stream>
+<streamid>1</streamid>
+<streamdescription>body</streamdescription>
+<uniquetermnum>3688802</uniquetermnum>
+<totaltermnum>775445396</totaltermnum>
+</stream>
+<stream>
+<streamid>2</streamid>
+<streamdescription>anchor</streamdescription>
+<uniquetermnum>170950</uniquetermnum>
+<totaltermnum>3510042</totaltermnum>
+</stream>
+<stream>
+<streamid>3</streamid>
+<streamdescription>title</streamdescription>
+<uniquetermnum>97407</uniquetermnum>
+<totaltermnum>6096931</totaltermnum>
+</stream>
+<stream>
+<streamid>4</streamid>
+<streamdescription>url</streamdescription>
+<uniquetermnum>238752</uniquetermnum>
+<totaltermnum>10872936</totaltermnum>
+</stream>
+<stream>
+<streamid>5</streamid>
+<streamdescription>whole document</streamdescription>
+<uniquetermnum>3930454</uniquetermnum>
+<totaltermnum>795925305</totaltermnum>
+</stream>
+</collectioninfo>

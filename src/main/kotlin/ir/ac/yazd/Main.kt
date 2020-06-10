@@ -155,12 +155,12 @@ fun search(q: Query) {
         val bodyQuery = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         val originalQuery = BooleanQuery.Builder()
             .add(titleQuery, Occur.SHOULD)
-            .add(bodyQuery, Occur.SHOULD)
+            .add(bodyQuery, Occur.MUST)
             .build()
         val featureQuery = FeatureField.newSaturationQuery("Features", "PageRank")
         query = BooleanQuery.Builder()
             .add(originalQuery, Occur.MUST)
-            .add(featureQuery, Occur.SHOULD)
+            .add(BoostQuery(featureQuery, 2f), Occur.SHOULD)
             .build()
     } else {
         // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 2) }

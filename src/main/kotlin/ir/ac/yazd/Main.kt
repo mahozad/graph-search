@@ -280,7 +280,8 @@ fun createPageRank() {
         println("change: $change, time: ${LocalTime.now()}")
     }
 
-    val result = scores.map { "${it.key} ${it.value}" }.joinToString("\r\n") { it }
+    // Multiply value by nodes.size because Lucene FeatureField stores only 9 bits (has precision of about 1E-3)
+    val result = scores.map { "${it.key} ${it.value * nodes.size}" }.joinToString("\r\n") { it }
     val resultPath = Path.of("scores.txt")
     Files.deleteIfExists(resultPath)
     val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)

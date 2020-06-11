@@ -46,6 +46,7 @@ class Indexer(private val scoreStrategy: ScoreStrategy) {
             add(StoredField("URL", url))
             add(TextField("TITLE", title, Store.NO))
             add(TextField("BODY", body, Store.NO))
+            // FIXME: By adding this feature field, number of stored docs decreases from about 997K to 370K
             if (scoreStrategy == WITH_PAGE_RANK) {
                 add(FeatureField("Features", "PageRank", pageRankScores.getValue(docId)))
             }

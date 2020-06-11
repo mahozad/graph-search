@@ -151,16 +151,27 @@ fun search(q: Query) {
     // OR
     val query: org.apache.lucene.search.Query
     if (scoreStrategy == WITH_PAGE_RANK) {
-        val titleQuery = PhraseQuery(11, "TITLE", *q.terms.toTypedArray())
-        val bodyQuery = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
+        val titleTermQueries = q.terms.map { TermQuery(Term("TITLE", it)) }
+        val titleBuilder = BooleanQuery.Builder()
+        titleTermQueries.forEach { titleBuilder.add(it, Occur.SHOULD) }
+        val titleQuery = titleBuilder.build()
+
+        val bodyTermQueries = q.terms.map { TermQuery(Term("BODY", it)) }
+        val bodyBuilder = BooleanQuery.Builder()
+        bodyTermQueries.forEach { bodyBuilder.add(it, Occur.SHOULD) }
+        val bodyQuery = bodyBuilder.build()
+
         val originalQuery = BooleanQuery.Builder()
             .add(titleQuery, Occur.SHOULD)
-            .add(bodyQuery, Occur.MUST)
+            .add(BoostQuery(bodyQuery, 8.2f /*or 8.6*/), Occur.MUST) // SHOULD and MUST yield same score
             .build()
-        val featureQuery = FeatureField.newSaturationQuery("Features", "PageRank")
+
+        // Specifying the weight parameter is exactly like wrapping the query in a BoostQuery with boost == weight
+        val featureQuery = FeatureField.newSaturationQuery("Features", "PageRank", 3.0f, 5.5f)
+
         query = BooleanQuery.Builder()
             .add(originalQuery, Occur.MUST)
-            .add(BoostQuery(featureQuery, 2f), Occur.SHOULD)
+            .add(featureQuery, Occur.SHOULD)
             .build()
     } else {
         // val titleFuzzyQueries = q.terms.map { FuzzyQuery(Term("TITLE", it), 1) }

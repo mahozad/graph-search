@@ -41,7 +41,7 @@ enum class ScoreStrategy {
 @ExperimentalStdlibApi
 fun main() {
     // val startTime = Instant.now()
-    // index(WITHOUT_PAGE_RANK)
+    // index(scoreStrategy)
     // val duration = Duration.between(startTime, Instant.now())
     // println("Time: ${duration.toMinutes()}m")
 
@@ -238,7 +238,9 @@ fun search(q: Query) {
     println("Query ${q.number}:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
     val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
-    // println(searcher.explain(query, 209882))
+    // println(searcher.explain(query, hits[0].doc))
+    // println(hits[0].docId)
+    // println("Number of docs: ${searcher.indexReader.numDocs()}")
     for (n in precisionSums.keys) {
         val precision = hits
             .filter { q.labels.containsKey(it.docId) }

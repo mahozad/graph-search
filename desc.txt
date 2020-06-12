@@ -31,3 +31,161 @@ Search time (average of 20 runs) & Precisions:
        	P@10: 56.0% -> 57.8% -> 60.6% -> 62.0% -> 62.6% -> 62.4% -> 65.4% -> 67.0%
        	P@20: 50.7% -> 51.9% -> 52.6% -> 54.0% -> 54.2% -> 54.4% -> 61.9% -> 62.4%
        	                                                    18s      12s      9.5s
+
+
+Without PageRank
+-------------------
+Hit 1 from Query 1:
+101.03763 = sum of:
+  2.9969764 = weight(TITLE:تلفن in 13935) [BM25Similarity], result of:
+    2.9969764 = score(freq=1.0), computed as boost * idf * tf from:
+      7.1761513 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+        762 = n, number of documents containing term
+        997246 = N, total number of documents with field
+      0.41763008 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+        1.0 = freq, occurrences of term within document
+        1.2 = k1, term saturation parameter
+        0.75 = b, length normalization parameter
+        8.0 = dl, length of field
+        6.578564 = avgdl, average length of field
+  2.765736 = weight(TITLE:همراه in 13935) [BM25Similarity], result of:
+    2.765736 = score(freq=1.0), computed as boost * idf * tf from:
+      6.6224546 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+        1326 = n, number of documents containing term
+        997246 = N, total number of documents with field
+      0.41763008 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+        1.0 = freq, occurrences of term within document
+        1.2 = k1, term saturation parameter
+        0.75 = b, length normalization parameter
+        8.0 = dl, length of field
+        6.578564 = avgdl, average length of field
+  95.27492 = sum of:
+    33.321735 = weight(BODY:قاچاق in 13935) [BM25Similarity], result of:
+      33.321735 = score(freq=6.0), computed as boost * idf * tf from:
+        8.2 = boost
+        4.80962 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          8108 = n, number of documents containing term
+          994790 = N, total number of documents with field
+        0.8448956 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          6.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          728.0 = dl, length of field (approximate)
+          817.4988 = avgdl, average length of field
+    33.584362 = weight(BODY:گوشي in 13935) [BM25Similarity], result of:
+      33.584362 = score(freq=9.0), computed as boost * idf * tf from:
+        8.2 = boost
+        4.5969024 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          10030 = n, number of documents containing term
+          994790 = N, total number of documents with field
+        0.8909595 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          9.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          728.0 = dl, length of field (approximate)
+          817.4988 = avgdl, average length of field
+    14.334948 = weight(BODY:تلفن in 13935) [BM25Similarity], result of:
+      14.334948 = score(freq=13.0), computed as boost * idf * tf from:
+        8.2 = boost
+        1.8962836 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          149343 = n, number of documents containing term
+          994790 = N, total number of documents with field
+        0.9218898 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          13.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          728.0 = dl, length of field (approximate)
+          817.4988 = avgdl, average length of field
+    14.033874 = weight(BODY:همراه in 13935) [BM25Similarity], result of:
+      14.033874 = score(freq=13.0), computed as boost * idf * tf from:
+        8.2 = boost
+        1.8564563 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          155411 = n, number of documents containing term
+          994790 = N, total number of documents with field
+        0.9218898 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          13.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          728.0 = dl, length of field (approximate)
+          817.4988 = avgdl, average length of field
+
+With PageRank
+-------------------
+Hit 1 from Query 1:
+94.57546 = sum of:
+  94.487816 = sum of:
+    2.9159868 = weight(TITLE:تلفن in 15513) [BM25Similarity], result of:
+      2.9159868 = score(freq=1.0), computed as boost * idf * tf from:
+        6.8644643 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          386 = n, number of documents containing term
+          370124 = N, total number of documents with field
+        0.4247945 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          1.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          8.0 = dl, length of field
+          6.8306055 = avgdl, average length of field
+    2.7476118 = weight(TITLE:همراه in 15513) [BM25Similarity], result of:
+      2.7476118 = score(freq=1.0), computed as boost * idf * tf from:
+        6.468096 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+          574 = n, number of documents containing term
+          370124 = N, total number of documents with field
+        0.4247945 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+          1.0 = freq, occurrences of term within document
+          1.2 = k1, term saturation parameter
+          0.75 = b, length normalization parameter
+          8.0 = dl, length of field
+          6.8306055 = avgdl, average length of field
+    88.82422 = sum of:
+      34.295235 = weight(BODY:قاچاق in 15513) [BM25Similarity], result of:
+        34.295235 = score(freq=6.0), computed as boost * idf * tf from:
+          8.2 = boost
+          4.835779 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+            2937 = n, number of documents containing term
+            369938 = N, total number of documents with field
+          0.8648752 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+            6.0 = freq, occurrences of term within document
+            1.2 = k1, term saturation parameter
+            0.75 = b, length normalization parameter
+            728.0 = dl, length of field (approximate)
+            1027.8987 = avgdl, average length of field
+      28.822557 = weight(BODY:گوشي in 15513) [BM25Similarity], result of:
+        28.822557 = score(freq=9.0), computed as boost * idf * tf from:
+          8.2 = boost
+          3.8810537 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+            7631 = n, number of documents containing term
+            369938 = N, total number of documents with field
+          0.90566796 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+            9.0 = freq, occurrences of term within document
+            1.2 = k1, term saturation parameter
+            0.75 = b, length normalization parameter
+            728.0 = dl, length of field (approximate)
+            1027.8987 = avgdl, average length of field
+      13.594613 = weight(BODY:تلفن in 15513) [BM25Similarity], result of:
+        13.594613 = score(freq=13.0), computed as boost * idf * tf from:
+          8.2 = boost
+          1.7774278 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+            62546 = n, number of documents containing term
+            369938 = N, total number of documents with field
+          0.932741 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+            13.0 = freq, occurrences of term within document
+            1.2 = k1, term saturation parameter
+            0.75 = b, length normalization parameter
+            728.0 = dl, length of field (approximate)
+            1027.8987 = avgdl, average length of field
+      12.111814 = weight(BODY:همراه in 15513) [BM25Similarity], result of:
+        12.111814 = score(freq=13.0), computed as boost * idf * tf from:
+          8.2 = boost
+          1.5835592 = idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:
+            75927 = n, number of documents containing term
+            369938 = N, total number of documents with field
+          0.932741 = tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:
+            13.0 = freq, occurrences of term within document
+            1.2 = k1, term saturation parameter
+            0.75 = b, length normalization parameter
+            728.0 = dl, length of field (approximate)
+            1027.8987 = avgdl, average length of field
+  0.08764976 = Saturation function on the Features field for the PageRank feature, computed as w * S / (S + k) from:
+    3.0 = w, weight of this function
+    5.5 = k, pivot feature value that would give a score contribution equal to w/2
+    0.16552734 = S, feature value

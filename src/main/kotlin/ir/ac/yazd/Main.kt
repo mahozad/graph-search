@@ -25,6 +25,11 @@ import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
 import kotlin.math.absoluteValue
 
+const val ANSI_RESET = "\u001B[0m"
+const val ANSI_CYAN = "\u001B[1;36m"
+const val ANSI_BLUE = "\u001B[1;34m"
+const val ANSI_GREEN = "\u001B[1;32m"
+
 val scoreStrategy = WITHOUT_PAGE_RANK
 val nodes = mutableSetOf<Int>()
 lateinit var graph: MutableMap<Int, List<Int>>
@@ -124,8 +129,9 @@ fun query() {
 
     for (query in queries) search(query)
 
-    println(precisionSums.map { "P@${it.key} = ${it.value / queries.size * 100}%" })
-    println("Time: ${Duration.between(startTime, Instant.now()).toMillis()}ms")
+    println()
+    println(precisionSums.map { "P@${it.key} = $ANSI_CYAN${it.value / queries.size * 100}$ANSI_RESET%" })
+    println("Time: $ANSI_BLUE${Duration.between(startTime, Instant.now()).toMillis()}${ANSI_RESET}ms")
 }
 
 fun fileNumber(path:Path) = path.fileName.toString().removePrefix("query-").removeSuffix(".xml").toInt()
@@ -260,7 +266,7 @@ fun search(q: Query) {
             .toDouble()
             .div(n)
         precisionSums.merge(n, precision, Double::plus)
-        println("P@$n = ${precision * 100}%")
+        println("P@$n = $ANSI_GREEN${precision * 100}$ANSI_RESET%")
     }
     println("---------------")
 }

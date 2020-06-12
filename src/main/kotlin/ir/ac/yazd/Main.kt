@@ -143,18 +143,6 @@ class Query(
 )
 
 fun search(q: Query) {
-    // TermsQuery class OR FuzzyLikeThisQuery class
-    // OR
-    // val query = MultiFieldQueryParser(arrayOf("TITLE", "BODY"), analyzer).parse(input)
-    // OR
-    // val query = BooleanQuery.Builder()
-    //     .add(TermInSetQuery("TITLE", terms.map { BytesRef(it) }), Occur.SHOULD)
-    //     .add(TermInSetQuery("BODY", terms.map { BytesRef(it) }), Occur.SHOULD)
-    //     .build()
-    // OR
-    // val parser = QueryParser("TITLE", analyzer)
-    // val query = parser.parse(input)
-    // OR
     val query: org.apache.lucene.search.Query
     if (scoreStrategy == WITH_PAGE_RANK) {
         val titleTermQueries = q.terms.map { TermQuery(Term("TITLE", it)) }
@@ -279,7 +267,7 @@ fun createPageRank() {
     constructGraphs()
     graph.keys.forEach { scores[it] = 1.0 / nodes.size }
     val dampingFactor = 0.85
-    val epsilon = 1.0 / (1.0E10 * nodes.size) // == score of each node (on average) should change more than 1E6
+    val epsilon = 1.0 / (1.0E10 * nodes.size) // == score of each node (on average) should change more than 1E10
     var change = 1.0
 
     // initially PageRank of all pages is equal to 1/N (N = number of nodes in graph)
@@ -290,7 +278,7 @@ fun createPageRank() {
     while (change > epsilon) {
         val previousScores = scores.values.sum()
         for (node in nodes) {
-            // / nodes.size has no effect on final scoring
+            // dividing by nodes.size has no effect on final scoring
             scores[node] = (1 - dampingFactor) / nodes.size +
                     dampingFactor * graphReverse.getOrDefault(node, emptyList())
                 .sumByDouble { scores[it]!! / graph[it]!!.size }

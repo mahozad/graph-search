@@ -124,7 +124,7 @@ fun query() {
 
     for (query in queries) search(query)
 
-    println(precisionSums.map { "P@${it.key}: ${it.value / 50}" /* 50=number of queries */ })
+    println(precisionSums.map { "P@${it.key} = ${it.value / queries.size * 100}%" })
     println("Time: ${Duration.between(startTime, Instant.now()).toMillis()}ms")
 }
 
@@ -221,14 +221,14 @@ fun search(q: Query) {
 
 
 
-        val titleFuzzyQueries = q.terms.map { TermQuery(Term("TITLE", it)) }
+        val titleTermQueries = q.terms.map { TermQuery(Term("TITLE", it)) }
         val titleBuilder = BooleanQuery.Builder()
-        titleFuzzyQueries.forEach { titleBuilder.add(it, Occur.SHOULD) }
+        titleTermQueries.forEach { titleBuilder.add(it, Occur.SHOULD) }
         val titleQuery = titleBuilder.build()
 
-        val bodyFuzzyQueries = q.terms.map { TermQuery(Term("BODY", it)) }
+        val bodyTermQueries = q.terms.map { TermQuery(Term("BODY", it)) }
         val bodyBuilder = BooleanQuery.Builder()
-        bodyFuzzyQueries.forEach { bodyBuilder.add(it, Occur.SHOULD) }
+        bodyTermQueries.forEach { bodyBuilder.add(it, Occur.SHOULD) }
         val bodyQuery = bodyBuilder.build()
 
         query = BooleanQuery.Builder()
@@ -248,21 +248,21 @@ fun search(q: Query) {
 
     println("Query ${q.number}:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
-    val hits = searcher.search(query, precisionSums.keys.max()!! + 10).scoreDocs
+    val docs = searcher.search(query, precisionSums.keys.max()!! + 10)
+    val hits = docs.scoreDocs.filter { q.labels.containsKey(it.docId) }
     // println(searcher.explain(query, hits[0].doc))
     // println(hits[0].docId)
     // println("Number of docs: ${searcher.indexReader.numDocs()}")
     for (n in precisionSums.keys) {
         val precision = hits
-            .filter { q.labels.containsKey(it.docId) }
             .take(n)
             .sumBy { q.labels.getValue(it.docId) }
             .toDouble()
             .div(n)
         precisionSums.merge(n, precision, Double::plus)
-        println("P@$n: ${precision * 100}%")
+        println("P@$n = ${precision * 100}%")
     }
-    println("----------------")
+    println("---------------")
 }
 
 val ScoreDoc.docId get() = searcher.doc(doc).get("DOCID").toInt()

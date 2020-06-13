@@ -278,10 +278,12 @@ fun createPageRank() {
     while (change > epsilon) {
         val previousScores = scores.values.sum()
         for (node in nodes) {
-            // dividing by nodes.size has no effect on final scoring
-            scores[node] = (1 - dampingFactor) / nodes.size +
-                    dampingFactor * graphReverse.getOrDefault(node, emptyList())
-                .sumByDouble { scores[it]!! / graph[it]!!.size }
+            scores[node] =
+                // Probability that surfer chooses a̲ node from my parents' children (dampingFactor) * score of me computed by score of my parents
+                dampingFactor * graphReverse.getOrDefault(node, emptyList()).sumByDouble { scores[it]!! / graph[it]!!.size }
+            +
+                // Probability of visiting me randomly in n nodes by random surfer (1-dampingFactor)
+                (1 - dampingFactor) / nodes.size
         }
         change = (scores.values.sum() - previousScores).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")

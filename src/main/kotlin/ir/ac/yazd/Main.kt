@@ -172,7 +172,7 @@ fun search(q: Query) {
         // val bodyQuery = PhraseQuery(32, "BODY", *q.terms.toTypedArray())
         // query = BooleanQuery.Builder()
         //     .add(titleQuery, Occur.SHOULD)
-        //     .add(bodyQuery, Occur.MUST)
+        //     .add(BoostQuery(bodyQuery, 1.2F), Occur.SHOULD)
         //     .build()
 
 

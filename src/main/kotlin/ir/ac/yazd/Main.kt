@@ -1,8 +1,7 @@
 package ir.ac.yazd
 
 import com.github.junrar.Archive
-import ir.ac.yazd.ScoreStrategy.WITHOUT_PAGE_RANK
-import ir.ac.yazd.ScoreStrategy.WITH_PAGE_RANK
+import ir.ac.yazd.ScoreStrategy.*
 import org.apache.lucene.document.FeatureField
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.index.Term
@@ -21,7 +20,6 @@ import java.time.Instant
 import java.time.LocalTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.DAYS
-import java.util.function.BiPredicate
 import javax.xml.parsers.SAXParserFactory
 import kotlin.math.absoluteValue
 
@@ -30,17 +28,18 @@ const val ANSI_CYAN = "\u001B[1;36m"
 const val ANSI_BLUE = "\u001B[1;34m"
 const val ANSI_GREEN = "\u001B[1;32m"
 
-val scoreStrategy = WITHOUT_PAGE_RANK
+val scoreStrategy = STANDARD
 val nodes = mutableSetOf<Int>()
 lateinit var graph: MutableMap<Int, List<Int>>
 lateinit var graphReverse: MutableMap<Int, List<Int>>
 var scores: MutableMap<Int, Double> = mutableMapOf()
-val precisionSums = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
+var precisionSums = mutableMapOf(5 to 0.0, 10 to 0.0, 20 to 0.0)
 lateinit var searcher: IndexSearcher
 
 enum class ScoreStrategy {
     WITH_PAGE_RANK,
-    WITHOUT_PAGE_RANK
+    WITH_HOST_RANK,
+    STANDARD
 }
 
 @ExperimentalStdlibApi
@@ -52,7 +51,11 @@ fun main() {
 
     // createPageRank()
 
-    val indexPath = if (scoreStrategy == WITH_PAGE_RANK) Path.of("E:index-pageranked") else Path.of("E:index")
+    val indexPath = when (scoreStrategy) {
+        WITH_PAGE_RANK -> Path.of("E:index-pageranked")
+        WITH_HOST_RANK -> Path.of("E:index-hostranked")
+        else -> Path.of("E:index")
+    }
     val directory = MMapDirectory(indexPath)
     val reader = DirectoryReader.open(directory)
     searcher = IndexSearcher(reader)
@@ -98,7 +101,7 @@ fun query() {
     val parser = SAXParserFactory.newInstance().newSAXParser()
     val queries = mutableListOf<Query>()
     Files
-        .find(path, 1, BiPredicate { f, _ -> f.fileName.toString().startsWith("query") })
+        .find(path, 1, { f, _ -> f.fileName.toString().startsWith("query") })
         .sorted { f1, f2 -> fileNumber(f1) - fileNumber(f2)}
         .forEach {
             val handler = object : DefaultHandler() {
@@ -144,7 +147,7 @@ class Query(
 
 fun search(q: Query) {
     val query: org.apache.lucene.search.Query
-    if (scoreStrategy == WITH_PAGE_RANK) {
+    if (scoreStrategy == WITH_PAGE_RANK || scoreStrategy == WITH_HOST_RANK) {
         val titleTermQueries = q.terms.map { TermQuery(Term("TITLE", it)) }
         val titleBuilder = BooleanQuery.Builder()
         titleTermQueries.forEach { titleBuilder.add(it, Occur.SHOULD) }
@@ -242,7 +245,7 @@ fun search(q: Query) {
 
     println("Query ${q.number}:")
     // Retrieve 10 additional results so if some of them are not in query docs we can compensate for them
-    val docs = searcher.search(query, precisionSums.keys.max()!! + 10)
+    val docs = searcher.search(query, precisionSums.keys.maxOrNull()!! + 10)
     val hits = docs.scoreDocs.filter { q.labels.containsKey(it.docId) }
     // println(searcher.explain(query, hits[0].doc))
     // println(hits[0].docId)
@@ -250,7 +253,7 @@ fun search(q: Query) {
     for (n in precisionSums.keys) {
         val precision = hits
             .take(n)
-            .sumBy { q.labels.getValue(it.docId) }
+            .sumOf { q.labels.getValue(it.docId) }
             .toDouble()
             .div(n)
         precisionSums.merge(n, precision, Double::plus)
@@ -278,19 +281,16 @@ fun createPageRank() {
     while (change > epsilon) {
         val previousScores = scores.values.sum()
         for (node in nodes) {
-            scores[node] =
-                // Probability that surfer chooses a̲ node from my parents' children (dampingFactor) * score of me computed by score of my parents
-                dampingFactor * graphReverse.getOrDefault(node, emptyList()).sumByDouble { scores[it]!! / graph[it]!!.size }
-            +
-                // Probability of visiting me randomly in n nodes by random surfer (1-dampingFactor)
-                (1 - dampingFactor) / nodes.size
+            scores[node] = (1 - dampingFactor) / nodes.size +
+                    dampingFactor * graphReverse.getOrDefault(node, emptyList())
+                .sumOf { scores[it]!! / graph[it]!!.size }
         }
         change = (scores.values.sum() - previousScores).absoluteValue
         println("change: $change, time: ${LocalTime.now()}")
     }
 
     // Multiply value by nodes.size because Lucene FeatureField stores only 9 bits (has precision of about 1E-3)
-    val result = scores.map { "${it.key} ${it.value * nodes.size}" }.joinToString("\r\n") { it }
+    val result = scores.map { "${it.key} ${it.value * nodes.size}" }.joinToString("\r\n")
     val resultPath = Path.of("scores.txt")
     Files.deleteIfExists(resultPath)
     val bufferedWriter = Files.newBufferedWriter(resultPath, StandardOpenOption.CREATE)
@@ -300,7 +300,7 @@ fun createPageRank() {
 }
 
 fun constructGraphs() {
-    val sourceFilePath = Path.of("../graph-analysis/src/main/resources/sample-graph.txt")
+    val sourceFilePath = Path.of("../graph-analysis/src/main/resources/graph.txt")
 
     graph = Files.newBufferedReader(sourceFilePath)
         .lineSequence()

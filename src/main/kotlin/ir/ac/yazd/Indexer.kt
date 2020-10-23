@@ -17,7 +17,7 @@ import java.nio.file.Path
 
 class Indexer(private val scoreStrategy: ScoreStrategy) {
 
-    private var indexPath = if (scoreStrategy == WITH_PAGE_RANK) Path.of("E:/index-pageranked") else Path.of("E:index")
+    private var indexPath = if (scoreStrategy == WITH_PAGE_RANK) Path.of("E:/index-hostranked") else Path.of("E:index")
 
     init {
         if (Files.exists(indexPath)) Files.list(indexPath).forEach(Files::delete)
@@ -35,7 +35,7 @@ class Indexer(private val scoreStrategy: ScoreStrategy) {
         config.ramBufferSizeMB = 128.0 // To increase performance
         config.similarity = BM25Similarity() // NOTE: This should be same as the one used when searching
         if (scoreStrategy == WITH_PAGE_RANK) {
-            pageRankScores = Files.newBufferedReader(Path.of("scores.txt")).lineSequence()
+            pageRankScores = Files.newBufferedReader(Path.of("page-ranks_hosted.txt")).lineSequence()
                 .associate { it.substringBefore(" ").toInt() to it.substringAfter(" ").toFloat() }
         }
     }
@@ -48,7 +48,7 @@ class Indexer(private val scoreStrategy: ScoreStrategy) {
             add(TextField("BODY", body, Store.NO))
             // FIXME: By adding this feature field, number of stored docs decreases from about 997K to 370K
             if (scoreStrategy == WITH_PAGE_RANK) {
-                add(FeatureField("Features", "PageRank", pageRankScores.getValue(docId)))
+                add(FeatureField("Features", "PageRank", pageRankScores.getValue(docId)*10E4f))
             }
         }
         indexWriter.addDocument(document)
